@@ -54,7 +54,7 @@ def editar_registro(id_unico, nuevo_apellido, nuevo_nombre):
     st.success(f"Registro: {nuevo_apellido.capitalize()}, {nuevo_nombre.capitalize()} fue editado correctamente.")
 
 # ----------------------------------------------------------
-st.image("img/uruLogo.png")
+st.logo("img/uruLogo.png")
 # Configurar la interfaz de usuario
 st.title("Sistema de Gestión de Registros")
 
