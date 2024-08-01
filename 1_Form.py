@@ -12,7 +12,7 @@ def generar_id():
 
 # Función para cargar los datos desde el archivo JSON
 def cargar_datos():
-    directorio = "https://github.com/martinjauma/gduru/tree/main/json"
+    directorio = "json"
     archivo_json = os.path.join(directorio, "datos.json")
     if os.path.exists(archivo_json):
         with open(archivo_json, "r") as archivo:
