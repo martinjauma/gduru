@@ -1,95 +1,153 @@
 import streamlit as st
 import json
+import os
 import uuid
-import requests
 from datetime import datetime
-import base64
 
-# Intentar acceder al secreto GITHUB_TOKEN
-try:
-    GITHUB_TOKEN = st.secrets["STREAMLIT_FORM"]
-    st.write("GITHUB_TOKEN encontrado en secretos.")
-except KeyError:
-    st.error("GITHUB_TOKEN no encontrado en secretos. Asegúrate de que está configurado correctamente.")
-    st.stop()
+# Funciones -------------------------------------------------------
 
-REPO_OWNER = "martinjauma"
-REPO_NAME = "gduru"
-FILE_PATH = "json/datos.json"
+# Función para generar un ID único para cada registro
+def generar_id():
+    return str(uuid.uuid4())
 
-def leer_datos():
-    url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/contents/{FILE_PATH}"
-    headers = {
-        "Authorization": f"token {GITHUB_TOKEN}",
-        "Accept": "application/vnd.github.v3.raw"
-    }
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        return json.loads(response.content)
-    return []
-
-def escribir_datos(datos):
-    url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/contents/{FILE_PATH}"
-    headers = {
-        "Authorization": f"token {GITHUB_TOKEN}",
-        "Accept": "application/vnd.github.v3+json"
-    }
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        sha = response.json()["sha"]
+# Función para cargar los datos desde el archivo JSON
+def cargar_datos():
+    directorio = "jaon"
+    archivo_json = os.path.join(directorio, "datos.json")
+    if os.path.exists(archivo_json):
+        with open(archivo_json, "r") as archivo:
+            try:
+                datos = json.load(archivo)
+                return datos
+            except json.JSONDecodeError:
+                st.error("Error al cargar los datos desde el archivo JSON.")
+                return []
     else:
-        sha = None
-    contenido_encoded = base64.b64encode(json.dumps(datos).encode()).decode()
-    data = {
-        "message": "Actualizar datos.json",
-        "content": contenido_encoded,
-        "branch": "main"
-    }
-    if sha:
-        data["sha"] = sha
-    response = requests.put(url, headers=headers, data=json.dumps(data))
-    return response.status_code == 200 or response.status_code == 201
+        return []
 
-st.title("Formulario de Datos")
+# Función para guardar los datos en el archivo JSON
+def guardar_datos(datos):
+    directorio = "json"
+    archivo_json = os.path.join(directorio, "datos.json")
+    with open(archivo_json, "w") as archivo:
+        json.dump(datos, archivo, indent=4)
 
-datos = leer_datos()
-
-with st.form("Agregar Registro"):
-    nombre = st.text_input("Nombre")
-    edad = st.number_input("Edad", min_value=0, max_value=120)
-    altura = st.number_input("Altura (cm)", min_value=0)
-    peso = st.number_input("Peso (kg)", min_value=0)
-    submitted = st.form_submit_button("Agregar")
-
-    if submitted:
-        nuevo_registro = {
-            "id": str(uuid.uuid4()),
-            "nombre": nombre,
-            "edad": edad,
-            "altura": altura,
-            "peso": peso,
-            "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-        datos.append(nuevo_registro)
-        if escribir_datos(datos):
-            st.success("Registro agregado exitosamente.")
-        else:
-            st.error("Hubo un problema al agregar el registro.")
-
-st.subheader("Registros")
-for registro in datos:
-    st.write(registro)
-
+# Función para eliminar un registro por ID
 def eliminar_registro(id_unico):
-    datos_filtrados = [r for r in datos if r["id"] != id_unico]
-    if escribir_datos(datos_filtrados):
-        st.success("Registro eliminado exitosamente.")
+    datos = cargar_datos()
+    registro_eliminado = next((registro for registro in datos if registro["ID"] == id_unico), None)
+    datos = [registro for registro in datos if registro["ID"] != id_unico]
+    guardar_datos(datos)
+    if registro_eliminado:
+        st.success(f"Registro: {registro_eliminado['Apellido']}, {registro_eliminado['Nombre']} fue eliminado correctamente.")
     else:
-        st.error("Hubo un problema al eliminar el registro.")
+        st.warning(f"No se encontró el registro con ID {id_unico} para eliminar.")
 
-with st.form("Eliminar Registro"):
-    id_a_eliminar = st.text_input("ID del Registro a Eliminar")
-    eliminar = st.form_submit_button("Eliminar")
+# Función para editar un registro por ID
+def editar_registro(id_unico, nuevo_apellido, nuevo_nombre):
+    datos = cargar_datos()
+    for registro in datos:
+        if registro["ID"] == id_unico:
+            registro["Apellido"] = nuevo_apellido.capitalize()
+            registro["Nombre"] = nuevo_nombre.capitalize()
+    guardar_datos(datos)
+    st.success(f"Registro: {nuevo_apellido.capitalize()}, {nuevo_nombre.capitalize()} fue editado correctamente.")
 
-    if eliminar:
-        eliminar_registro(id_a_eliminar)
+# ----------------------------------------------------------
+st.logo("img/uruLogo.jpeg")
+# Configurar la interfaz de usuario
+st.title("Sistema de Gestión de Registros")
+
+opcion = st.selectbox("Selecciona una opción:", ["ALTA", "EDICIÓN", "ELIMINAR"])
+
+if opcion == "ALTA":
+    st.subheader("Formulario de Alta")
+
+    # Lista de campos del formulario
+    campos_formulario = ["Apellido", "Nombre", "Edad", "Dirección", "Teléfono", "Email","ALTURA"]
+
+    with st.form(key='miForm', clear_on_submit=True):
+        # Crear inputs dinámicamente
+        datos_formulario = {}
+        for campo in campos_formulario:
+            datos_formulario[campo] = st.text_input(campo)
+
+        submit_button = st.form_submit_button("Alta")
+
+    if submit_button:
+        if all(datos_formulario.values()):
+            # Generar un ID único
+            id_unico = generar_id()
+            
+            # Obtener la fecha y hora actuales
+            fecha_alta = datetime.now().strftime("%Y%m%d%H:%M")
+            
+            # Crear un diccionario con los datos del formulario
+            datos = {
+                "ID": id_unico,
+                "FechaAlta": fecha_alta
+            }
+            
+            # Agregar datos del formulario al diccionario
+            for campo, valor in datos_formulario.items():
+                datos[campo] = valor.capitalize()
+
+            # Cargar datos existentes y agregar nuevos datos
+            datos_existentes = cargar_datos()
+            datos_existentes.append(datos)
+            guardar_datos(datos_existentes)
+            
+            # Mensaje de éxito
+            st.success(f"Formulario enviado con éxito. Los datos se han guardado en la base de datos.")
+        else:
+            st.error("Por favor, complete todos los campos.")
+
+elif opcion == "EDICIÓN":
+    st.subheader("Buscar y Editar Registros")
+
+    apellido_buscar = st.text_input("Buscar por Apellido")
+    datos = cargar_datos()
+
+    # Filtrar registros por apellido
+    registros_filtrados = [registro for registro in datos if apellido_buscar.capitalize() in registro["Apellido"].capitalize()]
+
+    if registros_filtrados:
+        apellidos = [registro["Apellido"] for registro in registros_filtrados]
+        apellidos_buscar = st.selectbox("Seleccionar Apellido", options=apellidos)
+
+        if apellidos_buscar:
+            registro_seleccionado = next((registro for registro in registros_filtrados if registro["Apellido"] == apellidos_buscar), None)
+            if registro_seleccionado:
+                id_seleccionado = registro_seleccionado["ID"]
+                nuevo_apellido = st.text_input("Nuevo Apellido", value=registro_seleccionado["Apellido"])
+                nuevo_nombre = st.text_input("Nuevo Nombre", value=registro_seleccionado["Nombre"])
+
+                if st.button("Editar"):
+                    editar_registro(id_seleccionado, nuevo_apellido.capitalize(), nuevo_nombre.capitalize())
+    else:
+        if apellido_buscar:
+            st.warning("No se encontraron registros con ese apellido.")
+
+elif opcion == "ELIMINAR":
+    st.subheader("Buscar y Eliminar Registros")
+
+    apellido_buscar = st.text_input("Buscar por Apellido")
+    datos = cargar_datos()
+
+    # Filtrar registros por apellido
+    registros_filtrados = [registro for registro in datos if apellido_buscar.capitalize() in registro["Apellido"].capitalize()]
+
+    if registros_filtrados:
+        apellidos = [registro["Apellido"] for registro in registros_filtrados]
+        apellidos_buscar = st.selectbox("Seleccionar Apellido", options=apellidos)
+
+        if apellidos_buscar:
+            registro_seleccionado = next((registro for registro in registros_filtrados if registro["Apellido"] == apellidos_buscar), None)
+            if registro_seleccionado:
+                id_seleccionado = registro_seleccionado["ID"]
+
+                if st.button("Eliminar"):
+                    eliminar_registro(id_seleccionado)
+    else:
+        if apellido_buscar:
+            st.warning("No se encontraron registros con ese apellido.")
