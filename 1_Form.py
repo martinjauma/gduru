@@ -1,6 +1,7 @@
 import streamlit as st
 import pymongo
 from datetime import datetime
+import uuid 
 
 # Conexión a MongoDB
 client = pymongo.MongoClient("mongodb+srv://martinjauma:pistonAdmin@cluster0.g4mk1az.mongodb.net/")
