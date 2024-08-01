@@ -2,35 +2,56 @@ import streamlit as st
 import json
 import os
 import uuid
+import requests
 from datetime import datetime
+import base64
 
-# Funciones -------------------------------------------------------
+# Configura tu token de acceso personal de GitHub y la información del repositorio
+GITHUB_TOKEN = st.secrets["GITHUB_TOKEN"]
+REPO_OWNER = "martinjauma"
+REPO_NAME = "gduru"
+FILE_PATH = "json/datos.json"
 
 # Función para generar un ID único para cada registro
 def generar_id():
     return str(uuid.uuid4())
 
-# Función para cargar los datos desde el archivo JSON
+# Función para cargar los datos desde el archivo JSON en GitHub
 def cargar_datos():
-    directorio = "jaon"
-    archivo_json = os.path.join(directorio, "datos.json")
-    if os.path.exists(archivo_json):
-        with open(archivo_json, "r") as archivo:
-            try:
-                datos = json.load(archivo)
-                return datos
-            except json.JSONDecodeError:
-                st.error("Error al cargar los datos desde el archivo JSON.")
-                return []
+    url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/contents/{FILE_PATH}"
+    headers = {
+        "Authorization": f"token {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        file_content = response.json()
+        return json.loads(base64.b64decode(file_content['content']).decode('utf-8'))
     else:
         return []
 
-# Función para guardar los datos en el archivo JSON
+# Función para guardar los datos en el archivo JSON en GitHub
 def guardar_datos(datos):
-    directorio = "json"
-    archivo_json = os.path.join(directorio, "datos.json")
-    with open(archivo_json, "w") as archivo:
-        json.dump(datos, archivo, indent=4)
+    url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/contents/{FILE_PATH}"
+    headers = {
+        "Authorization": f"token {GITHUB_TOKEN}",
+        "Accept": "application/vnd.github.v3+json"
+    }
+    current_data = requests.get(url, headers=headers).json()
+    sha = current_data['sha']
+    message = "Actualizando datos.json"
+    content = json.dumps(datos, indent=4)
+    encoded_content = base64.b64encode(content.encode('utf-8')).decode('utf-8')
+    data = {
+        "message": message,
+        "content": encoded_content,
+        "sha": sha
+    }
+    response = requests.put(url, headers=headers, json=data)
+    if response.status_code == 201 or response.status_code == 200:
+        st.success("Datos guardados exitosamente en GitHub.")
+    else:
+        st.error(f"Error al guardar los datos en GitHub: {response.json()}")
 
 # Función para eliminar un registro por ID
 def eliminar_registro(id_unico):
@@ -53,56 +74,35 @@ def editar_registro(id_unico, nuevo_apellido, nuevo_nombre):
     guardar_datos(datos)
     st.success(f"Registro: {nuevo_apellido.capitalize()}, {nuevo_nombre.capitalize()} fue editado correctamente.")
 
-# ----------------------------------------------------------
-st.logo("img/uruLogo.jpeg")
-# Configurar la interfaz de usuario
-st.title("Sistema de Gestión de Registros")
+# Main Streamlit App ----------------------------------------------
 
-opcion = st.selectbox("Selecciona una opción:", ["ALTA", "EDICIÓN", "ELIMINAR"])
+st.title("Formulario de Registro")
 
-if opcion == "ALTA":
-    st.subheader("Formulario de Alta")
+# Seleccionar opción
+opcion = st.sidebar.selectbox("Seleccione una opción", ["REGISTRAR", "EDITAR", "ELIMINAR"])
 
-    # Lista de campos del formulario
-    campos_formulario = ["Apellido", "Nombre", "Edad", "Dirección", "Teléfono", "Email","ALTURA"]
+if opcion == "REGISTRAR":
+    st.subheader("Registrar Nuevo Integrante")
 
-    with st.form(key='miForm', clear_on_submit=True):
-        # Crear inputs dinámicamente
-        datos_formulario = {}
-        for campo in campos_formulario:
-            datos_formulario[campo] = st.text_input(campo)
+    apellido = st.text_input("Apellido")
+    nombre = st.text_input("Nombre")
 
-        submit_button = st.form_submit_button("Alta")
-
-    if submit_button:
-        if all(datos_formulario.values()):
-            # Generar un ID único
-            id_unico = generar_id()
-            
-            # Obtener la fecha y hora actuales
-            fecha_alta = datetime.now().strftime("%Y%m%d%H:%M")
-            
-            # Crear un diccionario con los datos del formulario
-            datos = {
-                "ID": id_unico,
-                "FechaAlta": fecha_alta
+    if st.button("Registrar"):
+        if apellido and nombre:
+            datos = cargar_datos()
+            nuevo_registro = {
+                "ID": generar_id(),
+                "Apellido": apellido.capitalize(),
+                "Nombre": nombre.capitalize(),
+                "Fecha_Registro": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             }
-            
-            # Agregar datos del formulario al diccionario
-            for campo, valor in datos_formulario.items():
-                datos[campo] = valor.capitalize()
-
-            # Cargar datos existentes y agregar nuevos datos
-            datos_existentes = cargar_datos()
-            datos_existentes.append(datos)
-            guardar_datos(datos_existentes)
-            
-            # Mensaje de éxito
-            st.success(f"Formulario enviado con éxito. Los datos se han guardado en la base de datos.")
+            datos.append(nuevo_registro)
+            guardar_datos(datos)
+            st.success(f"{apellido.capitalize()}, {nombre.capitalize()} fue registrado correctamente.")
         else:
-            st.error("Por favor, complete todos los campos.")
+            st.warning("Por favor, complete todos los campos.")
 
-elif opcion == "EDICIÓN":
+elif opcion == "EDITAR":
     st.subheader("Buscar y Editar Registros")
 
     apellido_buscar = st.text_input("Buscar por Apellido")
