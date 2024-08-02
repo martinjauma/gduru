@@ -5,7 +5,7 @@ import uuid
 
 # Conexión a MongoDB
 client = pymongo.MongoClient("mongodb+srv://martinjauma:Piston@clustergd.qny9kpp.mongodb.net/") 
-db = client["gest_dep_ALTA"]
+db = client["gest_dep_ALTA?retryWrites=true&w=majority"]
 collection = db["gestDep_db_json"]
 
 # Función para generar un ID único para cada registro
