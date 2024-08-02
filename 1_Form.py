@@ -4,9 +4,9 @@ from datetime import datetime
 import uuid 
 
 # Conexión a MongoDB
-client = pymongo.MongoClient("mongodb+srv://martinjauma:Piston@clustergd.qny9kpp.mongodb.net/")
-db = client["gestDep_db_json"]
-collection = db["gest_dep_ALTA"]
+client = pymongo.MongoClient("mongodb+srv://martinjauma:Piston@clustergd.qny9kpp.mongodb.net/") 
+db = client["gest_dep_ALTA"]
+collection = db["gestDep_db_json"]
 
 # Función para generar un ID único para cada registro
 def generar_id():
