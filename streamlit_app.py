@@ -29,7 +29,7 @@ form = st.Page("form/1_Form.py", title="Formularios", icon=":material/bug_report
 if st.session_state.logged_in:
     pg = st.navigation(
         {
-            "Account": [logout_page],
+            "Account": [logout_page,login_page],
             "Reports": [dashboard_match,dashboard_ind],
             "Form": [form]
 
