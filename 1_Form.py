@@ -1,12 +1,10 @@
 import streamlit as st
 import pymongo
 from datetime import datetime
-import uuid 
-
-#probar git push
+import uuid
 
 # Conexión a MongoDB
-client = pymongo.MongoClient("mongodb+srv://martinjauma:Piston@clustergd.qny9kpp.mongodb.net/") 
+client = pymongo.MongoClient("mongodb+srv://martinjauma:Piston@clustergd.qny9kpp.mongodb.net/")
 db = client["gestDep_db_json"]
 collection = db["gest_dep_ALTA"]
 
@@ -35,7 +33,6 @@ def eliminar_registro(id_unico):
         st.warning(f"No se encontró ningún registro con ID {id_unico}")
 
 # ----------------------------------------------------------
-st.logo("img/uruLogo.png")
 st.title("Sistema de Gestión de Registros")
 
 opcion = st.selectbox("Selecciona una opción:", ["ALTA", "EDICIÓN", "ELIMINAR"])
@@ -44,7 +41,7 @@ if opcion == "ALTA":
     st.subheader("Formulario de Alta")
 
     # Lista de campos del formulario
-    campos_formulario = ["Apellido", "Nombre", "Edad", "Dirección", "Teléfono", "Email","ALTURA"]
+    campos_formulario = ["Apellido", "Nombre", "Edad", "Dirección", "Teléfono", "Email", "ALTURA"]
 
     with st.form(key='miForm', clear_on_submit=True):
         # Crear inputs dinámicamente
@@ -58,16 +55,16 @@ if opcion == "ALTA":
         if all(datos_formulario.values()):
             # Generar un ID único
             id_unico = generar_id()
-            
+
             # Obtener la fecha y hora actuales
             fecha_alta = datetime.now().strftime("%Y%m%d%H:%M")
-            
+
             # Crear un diccionario con los datos del formulario
             nuevo_registro = {
                 "ID": id_unico,
                 "FechaAlta": fecha_alta
             }
-            
+
             # Agregar datos del formulario al diccionario
             for campo, valor in datos_formulario.items():
                 nuevo_registro[campo] = valor.capitalize()
@@ -82,44 +79,42 @@ elif opcion == "EDICIÓN":
     st.subheader("Buscar y Editar Registros")
 
     apellido_buscar = st.text_input("Buscar por Apellido")
-    resultados = buscar_registros_por_apellido(apellido_buscar)
-
-    if resultados.count() > 0:
+    if apellido_buscar:
+        resultados = buscar_registros_por_apellido(apellido_buscar)
         registros = list(resultados)
-        apellidos = [registro["Apellido"] for registro in registros]
-        apellidos_buscar = st.selectbox("Seleccionar Apellido", options=apellidos)
 
-        if apellidos_buscar:
-            registro_seleccionado = next((registro for registro in registros if registro["Apellido"] == apellidos_buscar), None)
-            id_seleccionado = registro_seleccionado["ID"]
-            nuevo_apellido = st.text_input("Nuevo Apellido", value=registro_seleccionado["Apellido"])
-            nuevo_nombre = st.text_input("Nuevo Nombre", value=registro_seleccionado["Nombre"])
+        if registros:
+            apellidos = [registro["Apellido"] for registro in registros]
+            apellidos_buscar = st.selectbox("Seleccionar Apellido", options=apellidos)
 
-            if st.button("Editar"):
-                editar_registro(id_seleccionado, nuevo_apellido.capitalize(), nuevo_nombre.capitalize())
-    else:
-        if apellido_buscar:
+            if apellidos_buscar:
+                registro_seleccionado = next((registro for registro in registros if registro["Apellido"] == apellidos_buscar), None)
+                id_seleccionado = registro_seleccionado["ID"]
+                nuevo_apellido = st.text_input("Nuevo Apellido", value=registro_seleccionado["Apellido"])
+                nuevo_nombre = st.text_input("Nuevo Nombre", value=registro_seleccionado["Nombre"])
+
+                if st.button("Editar"):
+                    editar_registro(id_seleccionado, nuevo_apellido, nuevo_nombre)
+        else:
             st.warning("No se encontraron registros con ese apellido.")
 
 elif opcion == "ELIMINAR":
-   st.subheader("Buscar y Eliminar Registros")
-   apellido_buscar = st.text_input("Buscar por Apellido")
-   datos = cargar_datos()
+    st.subheader("Buscar y Eliminar Registros")
 
-    # Filtrar registros por apellido 
-   registros_filtrados = [registro for registro in datos if apellido_buscar.capitalize() in registro["Apellido"].capitalize()]
+    apellido_buscar = st.text_input("Buscar por Apellido")
+    if apellido_buscar:
+        resultados = buscar_registros_por_apellido(apellido_buscar)
+        registros = list(resultados)
 
-   if registros_filtrados:
-        apellidos = [registro["Apellido"] for registro in registros_filtrados]
-        apellidos_buscar = st.selectbox("Seleccionar Apellido", options=apellidos)
+        if registros:
+            apellidos = [registro["Apellido"] for registro in registros]
+            apellidos_buscar = st.selectbox("Seleccionar Apellido", options=apellidos)
 
-        if apellidos_buscar:
-            registro_seleccionado = next((registro for registro in registros_filtrados if registro["Apellido"] == apellidos_buscar), None)
-            if registro_seleccionado:
+            if apellidos_buscar:
+                registro_seleccionado = next((registro for registro in registros if registro["Apellido"] == apellidos_buscar), None)
                 id_seleccionado = registro_seleccionado["ID"]
 
                 if st.button("Eliminar"):
                     eliminar_registro(id_seleccionado)
-   else:
-        if apellido_buscar:
+        else:
             st.warning("No se encontraron registros con ese apellido.")
