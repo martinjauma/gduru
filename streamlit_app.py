@@ -1,39 +1,41 @@
 import streamlit as st
 
-# Verifica si el usuario ha iniciado sesión
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-# Funciones para iniciar y cerrar sesión
 def login():
-    st.session_state.logged_in = True
-    st.experimental_rerun()  # Utiliza rerun para actualizar la página
+    if st.button("Log in"):
+        st.session_state.logged_in = True
+        st.rerun()
 
 def logout():
-    st.session_state.logged_in = False
-    st.experimental_rerun()  # Utiliza rerun para actualizar la página
+    if st.button("Log out"):
+        st.session_state.logged_in = False
+        st.rerun()
 
-# Mostrar la página de inicio de sesión o el contenido principal según el estado de inicio de sesión
+login_page = st.Page(login, title="Log in", icon=":material/login:")
+logout_page = st.Page(logout, title="Log out", icon=":material/logout:")
+
+dashboard_match = st.Page(
+    "reports/dashboard_match.py", title="Dashboard Macht", icon=":material/dashboard:", default=True
+)
+dashboard_ind = st.Page(
+    "reports/dashboard_ind.py", title="Dashboard Individual", icon=":material/dashboard:", default=False
+)
+form = st.Page("form/1_Form.py", title="Formularios", icon=":material/bug_report:")
+
+
+
 if st.session_state.logged_in:
-    st.sidebar.title("Menú")
-    selection = st.sidebar.radio("Navegación", ["Dashboard Match", "Dashboard Individual", "Formularios"])
-    
-    if selection == "Dashboard Match":
-        st.title("Dashboard Match")
-        # Llama a tu script para el dashboard de partidos aquí
-        # exec(open("reports/dashboard_match.py").read())
-    elif selection == "Dashboard Individual":
-        st.title("Dashboard Individual")
-        # Llama a tu script para el dashboard individual aquí
-        # exec(open("reports/dashboard_ind.py").read())
-    elif selection == "Formularios":
-        st.title("Formularios")
-        # Llama a tu script para los formularios aquí
-        # exec(open("form/1_Form.py").read())
+    pg = st.navigation(
+        {
+            "Account": [logout_page],
+            "Reports": [dashboard_match,dashboard_ind],
+            "Form": [form]
 
-    if st.sidebar.button("Log out"):
-        logout()
+        }
+    )
 else:
-    st.title("Log in")
-    if st.button("Log in"):
-        login()
+    pg = st.navigation([login_page])
+
+pg.run()
