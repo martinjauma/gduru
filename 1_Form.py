@@ -2,6 +2,7 @@ import streamlit as st
 import pymongo
 from datetime import datetime
 import uuid
+import pandas as pd
 
 # Conexión a MongoDB
 client = pymongo.MongoClient("mongodb+srv://martinjauma:Piston@clustergd.qny9kpp.mongodb.net/")
@@ -31,6 +32,10 @@ def eliminar_registro(id_unico):
         st.success(f"Registro con ID {id_unico} eliminado correctamente.")
     else:
         st.warning(f"No se encontró ningún registro con ID {id_unico}")
+
+# Función para cargar todos los datos de la colección
+def cargar_todos_los_datos():
+    return list(collection.find())
 
 # ----------------------------------------------------------
 st.title("Sistema de Gestión de Registros")
@@ -72,6 +77,17 @@ if opcion == "ALTA":
             # Insertar el documento en MongoDB
             result = collection.insert_one(nuevo_registro)
             st.success(f"Formulario enviado con éxito. ID del registro: {result.inserted_id}")
+
+            # Mostrar tabla con los datos del nuevo registro
+            st.subheader("Nuevo Registro Agregado")
+            df_nuevo_registro = pd.DataFrame([nuevo_registro])
+            st.dataframe(df_nuevo_registro)
+
+            # Mostrar tabla con todos los datos de la colección
+            st.subheader("Todos los Registros en la Base de Datos")
+            datos_todos_registros = cargar_todos_los_datos()
+            df_todos_registros = pd.DataFrame(datos_todos_registros)
+            st.dataframe(df_todos_registros)
         else:
             st.error("Por favor, complete todos los campos.")
 
@@ -118,3 +134,9 @@ elif opcion == "ELIMINAR":
                     eliminar_registro(id_seleccionado)
         else:
             st.warning("No se encontraron registros con ese apellido.")
+
+    # Mostrar tabla con todos los datos de la colección
+    st.subheader("Todos los Registros en la Base de Datos")
+    datos_todos_registros = cargar_todos_los_datos()
+    df_todos_registros = pd.DataFrame(datos_todos_registros)
+    st.dataframe(df_todos_registros)
