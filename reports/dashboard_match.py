@@ -8,14 +8,17 @@ db = client["gestDep_db_json"]
 collection = db["match_URU"]
 
 # Función para cargar todos los datos de la colección
+@st.cache_data
 def cargar_todos_los_datos():
     return list(collection.find())
 
 # Función para obtener valores únicos de la clave "FECHA"
+@st.cache_data
 def obtener_valores_unicos_fecha():
     return collection.distinct("FECHA")
 
 # Función para cargar los datos filtrados por fecha
+@st.cache_data
 def cargar_datos_por_fecha(fecha):
     return list(collection.find({"FECHA": fecha}))
 
