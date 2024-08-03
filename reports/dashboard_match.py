@@ -16,7 +16,9 @@ def cargar_todos_los_datos():
 
 
 # Mostrar tabla con todos los datos de la colección
-st.subheader("Todos los Registros en la Base de Datos")
+st.title("Todos los Registros en la Base de Datos")
+st.subheader(" Match URU ")
+
 datos_todos_registros = cargar_todos_los_datos()
 df_todos_registros = pd.DataFrame(datos_todos_registros)
 st.dataframe(df_todos_registros)
