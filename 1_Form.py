@@ -3,6 +3,8 @@ import pymongo
 from datetime import datetime
 import uuid 
 
+#probar git push
+
 # Conexión a MongoDB
 client = pymongo.MongoClient("mongodb+srv://martinjauma:Piston@clustergd.qny9kpp.mongodb.net/") 
 db = client["gestDep_db_json"]
