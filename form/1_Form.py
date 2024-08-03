@@ -38,6 +38,7 @@ def cargar_todos_los_datos():
     return list(collection.find())
 
 # ----------------------------------------------------------
+
 st.title("Sistema de Gestión de Registros")
 
 opcion = st.selectbox("Selecciona una opción:", ["ALTA", "EDICIÓN", "ELIMINAR"])
