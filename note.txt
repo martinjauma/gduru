@@ -3,4 +3,5 @@
 
 en la carpeta $ git clone https://github.com/martinjauma/gduru.git
 
+ $ pipreqs . # para generar requirements.txt
 
