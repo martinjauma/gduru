@@ -9,10 +9,13 @@ db = client["gestDep_db_json"]
 collection = db["match_URU"]
 
 # Función para obtener valores únicos de un campo
+@st.cache_data
 def obtener_valores_unicos(campo):
     return collection.distinct(campo)
 
 # Función para cargar los datos filtrados
+@st.cache_data
+
 def cargar_datos_filtrados(fecha, row_name, equipo, resultado):
     filtro = {}
     if fecha:
@@ -37,6 +40,7 @@ def cargar_datos_filtrados(fecha, row_name, equipo, resultado):
 st.title("Dashboard de Matches URU")
 
 # Obtener valores únicos para todos los filtros
+
 valores_unicos_fecha = obtener_valores_unicos("FECHA")
 valores_unicos_row_name = obtener_valores_unicos("Row Name")
 valores_unicos_equipo = obtener_valores_unicos("EQUIPO")
