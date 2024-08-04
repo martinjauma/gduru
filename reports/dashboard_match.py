@@ -9,6 +9,7 @@ db = client["gestDep_db_json"]
 collection = db["match_URU"]
 
 # Función para obtener valores únicos de un campo
+@st.cache_data
 def obtener_valores_unicos(campo):
     return collection.distinct(campo)
 
