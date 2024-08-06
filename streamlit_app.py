@@ -20,7 +20,7 @@ dashboard_base_data = st.Page(
     "reports/dashboard_Data_Base.py", title="Dashboard Data Base", icon=":material/dashboard:", default=True
 )
 dashboard_match = st.Page(
-    "reports/dashboard_match.py", title="Dashboard Macht", icon=":material/dashboard:", default=True
+    "reports/dashboard_match.py", title="Dashboard Macht", icon=":material/dashboard:", default=False
 )
 dashboard_ind = st.Page(
     "reports/dashboard_ind.py", title="Dashboard Individual", icon=":material/dashboard:", default=False
