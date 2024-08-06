@@ -16,6 +16,7 @@ df = pd.DataFrame(partidos)
 # st.write("Columnas del DataFrame:", df.columns)
 
 # Procesar datos
+@st.cache_data
 def extraer_informacion_fecha(fecha):
     regex = r"(\d{6})-(\w{3})-P(\d{2})-(\w{3})@(\w{3})"
     match = re.search(regex, fecha)
@@ -33,6 +34,7 @@ if 'FECHA' in df.columns:
 else:
     st.error("La columna 'FECHA' no se encuentra en el DataFrame.")
 
+@st.cache_data
 def determinar_condicion(row):
     equipo = row.get('EQUIPO', '')
     local = row.get('LOCAL', '')
