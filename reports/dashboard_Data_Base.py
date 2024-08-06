@@ -1,96 +1,72 @@
-import pandas as pd
-from pymongo import MongoClient
-import re
 import streamlit as st
+import pymongo
+import pandas as pd
+import altair as alt
 
 # Conexión a MongoDB
-client = MongoClient("mongodb+srv://martinjauma:Piston@clustergd.qny9kpp.mongodb.net/")
+client = pymongo.MongoClient("mongodb+srv://martinjauma:Piston@clustergd.qny9kpp.mongodb.net/")
 db = client["gestDep_db_json"]
 collection = db["match_URU"]
 
+# Función para obtener valores únicos de un campo
 @st.cache_data
-def cargar_datos(fecha):
-    # Filtrar datos por fecha
-    return list(collection.find({"FECHA": fecha}))
+def obtener_valores_unicos(campo):
+    return collection.distinct(campo)
 
-# Selector único de FECHA
-fechas_disponibles = collection.distinct('FECHA')
-fecha_seleccionada = st.selectbox('Seleccionar un Match:', fechas_disponibles)
+# Función para cargar los datos filtrados
+@st.cache_data
 
-if fecha_seleccionada:
-    partidos = cargar_datos(fecha_seleccionada)
-    df = pd.DataFrame(partidos)
+def cargar_datos_filtrados(fecha, row_name, equipo, resultado):
+    filtro = {}
+    if fecha:
+        filtro["FECHA"] = fecha
+    if row_name:
+        row_name_mayusculas = [value.upper() for value in row_name]
+        filtro["Row Name"] = {"$regex": "|".join(row_name_mayusculas), "$options": "i"}  # Búsqueda case-insensitive
+    if equipo:
+        filtro["EQUIPO"] = equipo
+    if resultado:
+        resultado_mayusculas = [value.upper() for value in resultado]
+        filtro["RESULTADO"] = {"$regex": "|".join(resultado_mayusculas), "$options": "i"}  # Búsqueda case-insensitive
 
-    if not df.empty:
-        # Procesar datos
-        def extraer_informacion_fecha(fecha):
-            regex = r"(\d{6})-(\w{3})-P(\d{2})-(\w{3})@(\w{3})"
-            match = re.search(regex, fecha)
-            if match:
-                date, torneo, partido, equipo_local, equipo_visitante = match.groups()
-                return date, torneo, partido, equipo_local, equipo_visitante
-            else:
-                return None, None, None, None, None
+    # Imprimir la consulta para depuración
+    print(filtro)
 
-        df[['FECHA_EXTRAIDA', 'TORNEO', 'PARTIDO', 'LOCAL', 'VISITA']] = df['FECHA'].apply(
-            lambda fecha: pd.Series(extraer_informacion_fecha(fecha))
-        )
+    return list(collection.find(filtro))
 
-        def determinar_condicion(row):
-            equipo = row.get('EQUIPO', '')
-            local = row.get('LOCAL', '')
-            visita = row.get('VISITA', '')
-            if equipo == "01-URU" and local == "URU":
-                return "LOCAL"
-            elif equipo == "02-FRA" and visita == "FRA":
-                return "VISITA"
-            elif equipo == "03-ARG" and visita == "ARG":
-                return "VISITA"
-            elif equipo == "04-ESC" and visita == "ESC":
-                return "VISITA"
-            return "UNKNOWN"
 
-        df['CONDICION'] = df.apply(determinar_condicion, axis=1)
 
-        def calcular_puntaje(row, condicion):
-            row_name = row.get('Row Name', '')
-            resultado = row.get('RESULTADO', '')
-            if row_name == "TRY" and row['CONDICION'] == condicion:
-                return 5
-            elif row_name == "TRY PENAL" and row['CONDICION'] == condicion:
-                return 7
-            elif row_name == "GOAL" and resultado == "CONVERTIDO" and row['CONDICION'] == condicion:
-                return 2
-            elif row_name == "PENALTY KICK" and resultado == "CONVERTIDO" and row['CONDICION'] == condicion:
-                return 3
-            elif row_name == "DROP" and resultado == "CONVERTIDO" and row['CONDICION'] == condicion:
-                return 3
-            return 0
+# Título de la aplicación
+st.title("Dashboard de Matches URU")
 
-        df['SCORE LOCAL'] = df.apply(lambda row: calcular_puntaje(row, 'LOCAL'), axis=1)
-        df['SCORE VISITA'] = df.apply(lambda row: calcular_puntaje(row, 'VISITA'), axis=1)
+# Obtener valores únicos para todos los filtros
 
-        total_score_local = df['SCORE LOCAL'].sum()
-        total_score_visita = df['SCORE VISITA'].sum()
+valores_unicos_fecha = obtener_valores_unicos("FECHA")
+valores_unicos_row_name = obtener_valores_unicos("Row Name")
+valores_unicos_equipo = obtener_valores_unicos("EQUIPO")
+valores_unicos_resultado = obtener_valores_unicos("RESULTADO")
 
-        # Crear interfaz en Streamlit
-        st.title('SCORE')
+# Crear filtros interactivos
+fecha_seleccionada = st.selectbox("Selecciona una fecha", valores_unicos_fecha)
+row_name_seleccionado = st.multiselect("Selecciona uno o varios ROW NAME", valores_unicos_row_name)
+equipo_seleccionado = st.selectbox("Selecciona un equipo", valores_unicos_equipo)
+resultado_seleccionado = st.multiselect("Selecciona uno o varios resultados", valores_unicos_resultado)
 
-        # Crear dos columnas
-        col1, col2 = st.columns(2)
+# Cargar y mostrar los datos filtrados
+if fecha_seleccionada or row_name_seleccionado or equipo_seleccionado or resultado_seleccionado:
+    datos_filtrados = cargar_datos_filtrados(fecha_seleccionada, row_name_seleccionado, equipo_seleccionado, resultado_seleccionado)
+    if datos_filtrados:
+        df_filtrados = pd.DataFrame(datos_filtrados)
+        st.dataframe(df_filtrados)
 
-        # En la primera columna, mostrar el primer metric
-        with col1:
-            st.markdown(f'<h2 style="font-size: 24px;">{df["LOCAL"].iloc[0]}</h2>', unsafe_allow_html=True)
-            st.metric(label="", value=total_score_local)
-
-        # En la segunda columna, mostrar el segundo metric
-        with col2:
-            st.markdown(f'<h2 style="font-size: 24px;">{df["VISITA"].iloc[0]}</h2>', unsafe_allow_html=True)
-            st.metric(label="", value=total_score_visita)
-
-        st.subheader('Tabla del Partido Seleccionado')
-
-        # Colapsar tabla de datos en un expander
-        with st.expander("Datos del Partido"):
-            st.dataframe(df)
+        # Crear un gráfico de barras interactivo
+        chart = alt.Chart(df_filtrados).mark_bar().encode(
+            x='EQUIPO',
+            y='count()',
+            color='RESULTADO'  # Colorear las barras por resultado
+        ).interactive()
+        st.altair_chart(chart, use_container_width=True)
+    else:
+        st.write("No se encontraron registros para los filtros seleccionados.")
+else:
+    st.write("Por favor, selecciona al menos un filtro.")
