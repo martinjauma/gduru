@@ -16,6 +16,9 @@ def logout():
 login_page = st.Page(login, title="Log in", icon=":material/login:")
 logout_page = st.Page(logout, title="Log out", icon=":material/logout:")
 
+dashboard_base_data = st.Page(
+    "reports/dashboard_Data_Base.py", title="Dashboard Data Base", icon=":material/dashboard:", default=True
+)
 dashboard_match = st.Page(
     "reports/dashboard_match.py", title="Dashboard Macht", icon=":material/dashboard:", default=True
 )
@@ -30,7 +33,7 @@ if st.session_state.logged_in:
     pg = st.navigation(
         {
             "Account": [logout_page,login_page],
-            "Reports": [dashboard_match,dashboard_ind],
+            "Reports": [dashboard_base_data,dashboard_match,dashboard_ind],
             "Form": [form]
 
         }
