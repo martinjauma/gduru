@@ -53,6 +53,7 @@ if 'LOCAL' in df.columns and 'VISITA' in df.columns:
 else:
     st.error("Las columnas 'LOCAL' y 'VISITA' no se encuentran en el DataFrame.")
 
+@st.cache_data
 def calcular_puntaje(row, condicion):
     row_name = row.get('Row Name', '')
     resultado = row.get('RESULTADO', '')
