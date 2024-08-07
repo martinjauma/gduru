@@ -20,25 +20,32 @@ def obtener_fechas_unicas():
 def cargar_datos(fecha):
     return list(collection.find({"FECHA": fecha}))
 
-# def cargar_logo(equipo):
-#     url = f'https://storage.googleapis.com/slar2024/TEROS/TEAMS_strea/{equipo}.png'
-#     try:
-#         response = requests.get(url)
-#         response.raise_for_status()  # Lanza un error si la solicitud falla
-#         image = Image.open(BytesIO(response.content))
-#         return image
-#     except requests.exceptions.RequestException as e:
-#         st.error(f"Error al cargar la imagen desde la URL: {e}")
-#         return None
-#     except Exception as e:
-#         st.error(f"Error al procesar la imagen: {e}")
-#         return None
+
+
+# Cargar logo desde GOOGLE CLOUD
 def cargar_logo(equipo):
-    logo_path = os.path.join('images/', f'{equipo}.png')
-    if os.path.exists(logo_path):
-        return Image.open(logo_path)
-    else:
-        st.error(f"Imagen no encontrada para el equipo: {equipo}")
+    url = f'https://storage.googleapis.com/slar2024/TEROS/TEAMS_strea/{equipo}.png'
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Lanza un error si la solicitud falla
+        image = Image.open(BytesIO(response.content))
+        return image
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error al cargar la imagen desde la URL: {e}")
+        return None
+    except Exception as e:
+        st.error(f"Error al procesar la imagen: {e}")
+        return None
+    
+# Cargar logo desde gir carpeta images/
+# def cargar_logo(equipo):
+#     logo_path = os.path.join('images/', f'{equipo}.png')
+#     if os.path.exists(logo_path):
+#         return Image.open(logo_path)
+#     else:
+#         st.error(f"Imagen no encontrada para el equipo: {equipo}")
+
+
 
 def procesar_datos(partidos):
     df = pd.DataFrame(partidos)
