@@ -15,7 +15,6 @@ def obtener_valores_unicos(campo):
 
 # Función para cargar los datos filtrados
 @st.cache_data
-
 def cargar_datos_filtrados(fecha, row_name, equipo, resultado):
     filtro = {}
     if fecha:
