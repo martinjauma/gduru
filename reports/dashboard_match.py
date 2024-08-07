@@ -9,7 +9,7 @@ from io import BytesIO
 db = get_db()
 collection = db["match_URU"]
 
-@st.cache_resource
+@st.cache_data
 def obtener_fechas_unicas():
     return collection.distinct('FECHA')
 
@@ -20,7 +20,7 @@ def cargar_logo(equipo):
     url = f'https://storage.googleapis.com/slar2024/TEROS/TEAMS_strea/{equipo}.png'
     try:
         response = requests.get(url)
-        response.raise_for_status()  # Lanza un error si la solicitud falla
+        response.raise_for_status()
         image = Image.open(BytesIO(response.content))
         return image
     except requests.exceptions.RequestException as e:
@@ -30,14 +30,6 @@ def cargar_logo(equipo):
         st.error(f"Error al procesar la imagen: {e}")
         return None
     
-# Cargar logo desde gir carpeta images/ ojo que no se alinean los logos si es desde aca
-# def cargar_logo(equipo):
-#     logo_path = os.path.join('images/', f'{equipo}.png')
-#     if os.path.exists(logo_path):
-#         return Image.open(logo_path)
-#     else:
-#         st.error(f"Imagen no encontrada para el equipo: {equipo}")
-
 def procesar_datos(partidos):
     df = pd.DataFrame(partidos)
     if not df.empty:
@@ -47,8 +39,7 @@ def procesar_datos(partidos):
             match = re.search(regex, fecha)
             if match:
                 return match.groups()
-            else:
-                return [None] * 5
+            return [None] * 5
 
         df[['FECHA_EXTRAIDA', 'TORNEO', 'PARTIDO', 'LOCAL', 'VISITA']] = df['FECHA'].apply(
             lambda fecha: pd.Series(extraer_informacion_fecha(fecha))
@@ -103,53 +94,45 @@ if fecha_seleccionada:
         # Crear interfaz en Streamlit
         st.title('SCORE')
 
-        # Crear dos columnas para los logos
-        col1, col2, col3 = st.columns(3)
+        # Crear columnas para los logos
+        col1, col2, col3 = st.columns([1, 0.1, 1])
 
-        # En la primera columna, mostrar el logo local
+        # Mostrar el logo local
         with col1:
             st.markdown(f"""
-                <div style='display: flex; flex-direction: column; justify-content: flex-end; height: 200px;'>
+                <div style='text-align: center;'>
                     <img src='https://storage.googleapis.com/slar2024/TEROS/TEAMS_strea/{df_filtrado["LOCAL"].iloc[0]}.png' width='150' />
-                    <p style='text-align: center;'>{df_filtrado["LOCAL"].iloc[0]}</p>
+                    <p>{df_filtrado["LOCAL"].iloc[0]}</p>
                 </div>
                 """, unsafe_allow_html=True)
 
-        # En la segunda columna, dejar espacio
-        with col2:
-            st.write("")
-
-        # En la tercera columna, mostrar el logo visitante
+        # Mostrar el logo visitante
         with col3:
             st.markdown(f"""
-                <div style='display: flex; flex-direction: column; justify-content: flex-end; height: 200px;'>
+                <div style='text-align: center;'>
                     <img src='https://storage.googleapis.com/slar2024/TEROS/TEAMS_strea/{df_filtrado["VISITA"].iloc[0]}.png' width='150' />
-                    <p style='text-align: center;'>{df_filtrado["VISITA"].iloc[0]}</p>
+                    <p>{df_filtrado["VISITA"].iloc[0]}</p>
                 </div>
                 """, unsafe_allow_html=True)
 
-        # Crear dos columnas para los puntajes
-        col1, col2, col3 = st.columns(3)
+        # Crear columnas para los puntajes
+        col1, col2, col3 = st.columns([1, 0.1, 1])
 
         # Mostrar el puntaje local
         with col1:
             st.markdown(f"""
                 <div style='text-align: center;'>
-                    <h2 style='font-size: 24px;'>Score Local</h2>
-                    <h1 style='font-size: 36px;'>{total_score_local}</h1>
+                    <h2>Score Local</h2>
+                    <h1>{total_score_local}</h1>
                 </div>
                 """, unsafe_allow_html=True)
-
-        # Dejar espacio en la segunda columna
-        with col2:
-            st.write("")
 
         # Mostrar el puntaje visitante
         with col3:
             st.markdown(f"""
                 <div style='text-align: center;'>
-                    <h2 style='font-size: 24px;'>Score Visita</h2>
-                    <h1 style='font-size: 36px;'>{total_score_visita}</h1>
+                    <h2>Score Visita</h2>
+                    <h1>{total_score_visita}</h1>
                 </div>
                 """, unsafe_allow_html=True)
 
