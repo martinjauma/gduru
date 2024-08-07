@@ -1,18 +1,12 @@
 import pandas as pd
-from pymongo import MongoClient
 import re
 import streamlit as st
+from db import get_db  # Importamos la función para obtener la conexión a la base de datos
 
-# Conexión a MongoDB
-@st.experimental_singleton
-def get_mongo_client():
-    return MongoClient("mongodb+srv://martinjauma:Piston@clustergd.qny9kpp.mongodb.net/")
-
-client = get_mongo_client()
-db = client["gestDep_db_json"]
+db = get_db()
 collection = db["match_URU"]
 
-@st.experimental_singleton
+@st.cache_resource
 def obtener_fechas_unicas():
     return collection.distinct('FECHA')
 
