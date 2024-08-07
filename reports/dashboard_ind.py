@@ -116,14 +116,14 @@ col1,col2 = st.columns([1,2])
 
 with col1:
     st.subheader('ACC Seleccionadas')
-    st.table(df['Grupo Row Name'].value_counts().reset_index().rename(columns={'index': 'Grupo Row Name', 'Grupo Row Name': 'Conteo'}))
+    st.table(df['Grupo Row Name'].value_counts().reset_index().rename(columns={'index': 'ACC', 'Grupo Row Name': '#'}))
 
 with col2:
     st.plotly_chart(crear_grafico_radar_grupos(conteo_grupos, ''), use_container_width=True)
 
-# Filtrar los datos que se clasifican como 'OTRO'
-otros_row_names = df[df['Grupo Row Name'] == 'OTRO']['Row Name'].unique()
+# # Filtrar los datos que se clasifican como 'OTRO'
+# otros_row_names = df[df['Grupo Row Name'] == 'OTRO']['Row Name'].unique()
 
-# # Mostrar los Row Names que están clasificados como 'OTRO'
-# st.write('Row Names clasificados como OTRO:')
-# st.write(otros_row_names)
+# # # Mostrar los Row Names que están clasificados como 'OTRO'
+# # st.write('Row Names clasificados como OTRO:')
+# # st.write(otros_row_names)
