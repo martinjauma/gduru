@@ -3,12 +3,8 @@ import re
 import streamlit as st
 from db import get_db
 from PIL import Image
-import os
 import requests
 from io import BytesIO
-
-# https://storage.googleapis.com/slar2024/TEROS/TEAMS_strea/06-USA.png
-
 
 db = get_db()
 collection = db["match_URU"]
@@ -20,9 +16,6 @@ def obtener_fechas_unicas():
 def cargar_datos(fecha):
     return list(collection.find({"FECHA": fecha}))
 
-
-
-# Cargar logo desde GOOGLE CLOUD
 def cargar_logo(equipo):
     url = f'https://storage.googleapis.com/slar2024/TEROS/TEAMS_strea/{equipo}.png'
     try:
@@ -37,15 +30,13 @@ def cargar_logo(equipo):
         st.error(f"Error al procesar la imagen: {e}")
         return None
     
-# Cargar logo desde gir carpeta images/
+# Cargar logo desde gir carpeta images/ ojo que no se alinean los logos si es desde aca
 # def cargar_logo(equipo):
 #     logo_path = os.path.join('images/', f'{equipo}.png')
 #     if os.path.exists(logo_path):
 #         return Image.open(logo_path)
 #     else:
 #         st.error(f"Imagen no encontrada para el equipo: {equipo}")
-
-
 
 def procesar_datos(partidos):
     df = pd.DataFrame(partidos)
@@ -112,39 +103,15 @@ if fecha_seleccionada:
         # Crear interfaz en Streamlit
         st.title('SCORE')
 
-        # Crear dos columnas
+        # Crear dos columnas para los logos
         col1, col2, col3 = st.columns(3)
 
-        # En la primera columna, mostrar el logo y el puntaje local
+        # En la primera columna, mostrar el logo local
         with col1:
-            logo_local = cargar_logo(df_filtrado["LOCAL"].iloc[0])
-            if logo_local:
-                st.image(logo_local, caption=df_filtrado["LOCAL"].iloc[0], width=150)
-           
-        # En la segunda columna, dejar espacio
-        with col2:
-            st.write("")
-
-        # En la tercera columna, mostrar el logo y el puntaje visitante
-        with col3:
-            logo_visita = cargar_logo(df_filtrado["VISITA"].iloc[0])
-            if logo_visita:
-                st.image(logo_visita, caption=df_filtrado["VISITA"].iloc[0], width=150)
-           
-
-
-   
-   
-   
-        col1, col2, col3 = st.columns(3)
-
-    # En la primera columna, mostrar el logo y el puntaje local
-        with col1:
-           
             st.markdown(f"""
-                <div style='text-align: center;'>
-                    <h2 style='font-size: 24px;'>Score Local</h2>
-                    <h1 style='font-size: 36px;'>{total_score_local}</h1>
+                <div style='display: flex; flex-direction: column; justify-content: flex-end; height: 200px;'>
+                    <img src='https://storage.googleapis.com/slar2024/TEROS/TEAMS_strea/{df_filtrado["LOCAL"].iloc[0]}.png' width='150' />
+                    <p style='text-align: center;'>{df_filtrado["LOCAL"].iloc[0]}</p>
                 </div>
                 """, unsafe_allow_html=True)
 
@@ -152,7 +119,32 @@ if fecha_seleccionada:
         with col2:
             st.write("")
 
-        # En la tercera columna, mostrar el logo y el puntaje visitante
+        # En la tercera columna, mostrar el logo visitante
+        with col3:
+            st.markdown(f"""
+                <div style='display: flex; flex-direction: column; justify-content: flex-end; height: 200px;'>
+                    <img src='https://storage.googleapis.com/slar2024/TEROS/TEAMS_strea/{df_filtrado["VISITA"].iloc[0]}.png' width='150' />
+                    <p style='text-align: center;'>{df_filtrado["VISITA"].iloc[0]}</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+        # Crear dos columnas para los puntajes
+        col1, col2, col3 = st.columns(3)
+
+        # Mostrar el puntaje local
+        with col1:
+            st.markdown(f"""
+                <div style='text-align: center;'>
+                    <h2 style='font-size: 24px;'>Score Local</h2>
+                    <h1 style='font-size: 36px;'>{total_score_local}</h1>
+                </div>
+                """, unsafe_allow_html=True)
+
+        # Dejar espacio en la segunda columna
+        with col2:
+            st.write("")
+
+        # Mostrar el puntaje visitante
         with col3:
             st.markdown(f"""
                 <div style='text-align: center;'>
